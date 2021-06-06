@@ -1,0 +1,195 @@
+Description: >
+    This template deploys two Security Groups (One for Web Server and one for Load balancer),
+    Launch Configuration template, AutoScaling Group and a Load Balancer.
+
+Parameters:
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+  ImageId:
+    Description: ImageId for our Web Servers
+    Type: String
+  myIP:
+    Description: My IP address for Bastion Host
+    Type: String
+Resources:
+  RoleforS3Access:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+  ServerInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref RoleforS3Access
+      Path: /
+  LBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP access to our Load Balancer
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${EnvironmentName}-VPC"
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+  WebServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP access to our web servers
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${EnvironmentName}-VPC"
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+      - IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 0.0.0.0/0
+  SGIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      GroupId: !Ref WebServerSecurityGroup
+      SourceSecurityGroupId: !GetAtt BastionHostSecurityGroup.GroupId
+  BastionHostSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH access to Bastion Host instance.
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${EnvironmentName}-VPC"
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: !Ref myIP
+  WebServerLaunchConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      UserData: 
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          apt-get update -y
+          apt-get install unzip awscli -y
+          apt-get install apache2 -y
+          systemctl start apache2.service
+          cd /var/www/html
+          aws s3 cp s3://udacity-demo-1/udacity.zip .
+          unzip -o udacity.zip
+      ImageId: !Ref ImageId
+      InstanceType: t3.medium
+      IamInstanceProfile: !Ref ServerInstanceProfile
+      KeyName: myServer
+      SecurityGroups:
+        - !Ref WebServerSecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sdk"
+          Ebs:
+            VolumeSize: '10'
+  WebServerAutoScaling:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      MaxSize: '6'
+      MinSize: '4'
+      VPCZoneIdentifier:
+        - Fn::ImportValue: 
+            !Sub "${EnvironmentName}-PrivateSubnets"
+      LaunchConfigurationName: !Ref WebServerLaunchConfig
+      TargetGroupARNs:
+        - !Ref WebServerTargetGroup
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-WebServer
+          PropagateAtLaunch: "true"
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Subnets:
+      - Fn::ImportValue: !Sub "${EnvironmentName}-PublicSubnet1"
+      - Fn::ImportValue: !Sub "${EnvironmentName}-PublicSubnet2"
+      SecurityGroups:
+        - !Ref LBSecurityGroup
+  Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref WebServerTargetGroup
+      Port: '80'
+      Protocol: HTTP
+  LBListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref Listener
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref 'WebServerTargetGroup'
+      Priority: 1
+      Conditions:
+        - Field: path-pattern
+          Values: [/]
+  WebServerTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 8
+      HealthyThresholdCount: 2
+      Port: 80
+      Protocol: HTTP
+      UnhealthyThresholdCount: 5
+      VpcId: 
+        Fn::ImportValue:
+          Fn::Sub: "${EnvironmentName}-VPC"
+  BastionHost:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0cf6f5c8a62fa5da6
+      InstanceType: t3.micro
+      KeyName: myServer
+      NetworkInterfaces:
+        - DeviceIndex: "0"
+          AssociatePublicIpAddress: true
+          GroupSet: 
+            - !Ref BastionHostSecurityGroup
+          SubnetId: 
+            Fn::ImportValue:
+              !Sub "${EnvironmentName}-PublicSubnet1"
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-BastionHost
+Outputs:
+  LBEndpoint:
+    Description: A reference to the endpoint of Load Balancer
+    Value: 
+      !Join 
+        - ''
+        - - 'http://'
+          - !GetAtt LoadBalancer.DNSName
+    Export:
+      Name: !Sub ${EnvironmentName}-DnsEndpoint
