@@ -15,5 +15,5 @@ Main Stack has following resources:
 * AutoScaling Group
 * Launch Configuration
 * EC2 Instance 
-* Security Groups
+* Security Groups (for Load Balancer, Bastion Host and Web Servers)
 * Load Balancer
