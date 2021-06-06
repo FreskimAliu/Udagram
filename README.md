@@ -1,6 +1,6 @@
 # Udagram
 Deploy a high-availability web app using CloudFormation. This project is part of Cloud DevOps Engineer Nanodegree Program.
-![](Udagram Infrastructure.png)
+![](https://github.com/FreskimAliu/Udagram/blob/main/Udagram%20Infrastructure.png)
 ## Project is separated in two stacks: Network and Main stack. 
 
 Networking Stack has following resources:
