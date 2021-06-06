@@ -1,0 +1,14 @@
+[
+    {
+		"ParameterKey": "EnvironmentName",
+		"ParameterValue": "UdacityFinal"
+	  },
+    {
+        "ParameterKey": "ImageId",
+        "ParameterValue": "ami-090717c950a5c34d3"
+    },
+    {
+        "ParameterKey": "myIP",
+        "ParameterValue": "87.238.210.222/32"
+    }
+]
