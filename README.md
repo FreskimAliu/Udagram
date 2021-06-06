@@ -8,7 +8,7 @@ Networking Stack has following resources:
 * Subnets (2 Public and 2 Private Subnets)
 * Internet Gateway
 * Elastic IPs for NAT Gateway
-* NAT GAteways
+* NAT Gateways
 * Public and Private Route Table
 
 Main Stack has following resources:
