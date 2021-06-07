@@ -6,9 +6,9 @@ Parameters:
   EnvironmentName:
     Description: An environment name that will be prefixed to resource names
     Type: String
-#   ImageId:
-#     Description: ImageId for our Web Servers
-#     Type: String
+  ImageId:
+    Description: ImageId for our Web Servers
+    Type: String
 #   myIP:
 #     Description: My IP address for Bastion Host
 #     Type: String
@@ -66,26 +66,26 @@ Resources:
         FromPort: 0
         ToPort: 65535
         CidrIp: 0.0.0.0/0
-  SGIngress:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      IpProtocol: tcp
-      FromPort: 22
-      ToPort: 22
-      GroupId: !Ref WebServerSecurityGroup
-      SourceSecurityGroupId: !GetAtt BastionHostSecurityGroup.GroupId
-  BastionHostSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Allow SSH access to Bastion Host instance.
-      VpcId:
-        Fn::ImportValue:
-          !Sub "${EnvironmentName}-VPC"
-      SecurityGroupIngress:
-      - IpProtocol: tcp
-        FromPort: 22
-        ToPort: 22
-        CidrIp: !Ref myIP
+#   SGIngress:
+#     Type: AWS::EC2::SecurityGroupIngress
+#     Properties:
+#       IpProtocol: tcp
+#       FromPort: 22
+#       ToPort: 22
+#       GroupId: !Ref WebServerSecurityGroup
+#       SourceSecurityGroupId: !GetAtt BastionHostSecurityGroup.GroupId
+#   BastionHostSecurityGroup:
+#     Type: AWS::EC2::SecurityGroup
+#     Properties:
+#       GroupDescription: Allow SSH access to Bastion Host instance.
+#       VpcId:
+#         Fn::ImportValue:
+#           !Sub "${EnvironmentName}-VPC"
+#       SecurityGroupIngress:
+#       - IpProtocol: tcp
+#         FromPort: 22
+#         ToPort: 22
+#         CidrIp: !Ref myIP
   WebServerLaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
