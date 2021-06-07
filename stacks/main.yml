@@ -6,12 +6,12 @@ Parameters:
   EnvironmentName:
     Description: An environment name that will be prefixed to resource names
     Type: String
-  ImageId:
-    Description: ImageId for our Web Servers
-    Type: String
-  myIP:
-    Description: My IP address for Bastion Host
-    Type: String
+#   ImageId:
+#     Description: ImageId for our Web Servers
+#     Type: String
+#   myIP:
+#     Description: My IP address for Bastion Host
+#     Type: String
 Resources:
   RoleforS3Access:
     Type: AWS::IAM::Role
@@ -102,7 +102,6 @@ Resources:
       ImageId: !Ref ImageId
       InstanceType: t3.medium
       IamInstanceProfile: !Ref ServerInstanceProfile
-      KeyName: myServer
       SecurityGroups:
         - !Ref WebServerSecurityGroup
       BlockDeviceMappings:
@@ -166,23 +165,24 @@ Resources:
       VpcId: 
         Fn::ImportValue:
           Fn::Sub: "${EnvironmentName}-VPC"
-  BastionHost:
-    Type: AWS::EC2::Instance
-    Properties:
-      ImageId: ami-0cf6f5c8a62fa5da6
-      InstanceType: t3.micro
-      KeyName: myServer
-      NetworkInterfaces:
-        - DeviceIndex: "0"
-          AssociatePublicIpAddress: true
-          GroupSet: 
-            - !Ref BastionHostSecurityGroup
-          SubnetId: 
-            Fn::ImportValue:
-              !Sub "${EnvironmentName}-PublicSubnet1"
-      Tags:
-        - Key: Name
-          Value: !Sub ${EnvironmentName}-BastionHost
+# This was used only for development
+#   BastionHost:
+#     Type: AWS::EC2::Instance
+#     Properties:
+#       ImageId: ami-0cf6f5c8a62fa5da6
+#       InstanceType: t3.micro
+#       KeyName: myServer
+#       NetworkInterfaces:
+#         - DeviceIndex: "0"
+#           AssociatePublicIpAddress: true
+#           GroupSet: 
+#             - !Ref BastionHostSecurityGroup
+#           SubnetId: 
+#             Fn::ImportValue:
+#               !Sub "${EnvironmentName}-PublicSubnet1"
+#       Tags:
+#         - Key: Name
+#           Value: !Sub ${EnvironmentName}-BastionHost
 Outputs:
   LBEndpoint:
     Description: A reference to the endpoint of Load Balancer
