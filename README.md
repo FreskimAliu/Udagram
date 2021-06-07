@@ -17,3 +17,5 @@ Main Stack has following resources:
 * EC2 Instance 
 * Security Groups (for Load Balancer, Bastion Host and Web Servers)
 * Load Balancer
+
+Project Link: http://mains-loadb-m2lwdbqnb566-2028291873.us-west-2.elb.amazonaws.com/
