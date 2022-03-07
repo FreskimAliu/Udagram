@@ -108,7 +108,7 @@ Resources:
         - DeviceName: "/dev/sdk"
           Ebs:
             VolumeSize: '10'
-            Encrypted: true
+            Encrypted: 'true'
   WebServerAutoScaling:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
