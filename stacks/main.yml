@@ -108,6 +108,7 @@ Resources:
         - DeviceName: "/dev/sdk"
           Ebs:
             VolumeSize: '10'
+          Encrypted: true
   WebServerAutoScaling:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
@@ -126,9 +127,12 @@ Resources:
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
+      LoadBalancerAttributes:
+        - Key: routing.htttp.drop_invalid_header_fields.enabled
+          Value: true
       Subnets:
-      - Fn::ImportValue: !Sub "${EnvironmentName}-PublicSubnet1"
-      - Fn::ImportValue: !Sub "${EnvironmentName}-PublicSubnet2"
+        - Fn::ImportValue: !Sub "${EnvironmentName}-PublicSubnet1"
+        - Fn::ImportValue: !Sub "${EnvironmentName}-PublicSubnet2"
       SecurityGroups:
         - !Ref LBSecurityGroup
   Listener:
@@ -139,7 +143,7 @@ Resources:
         - Type: forward
           TargetGroupArn: !Ref WebServerTargetGroup
       Port: '80'
-      Protocol: HTTP
+      Protocol: HTTPS
   LBListenerRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
