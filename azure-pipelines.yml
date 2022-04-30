@@ -1,8 +1,4 @@
 # Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
 - main
 
@@ -10,10 +6,15 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
-
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+- task: CloudFormationCreateOrUpdateStack@1
+  inputs:
+    awsCredentials: 'Connect to AWS'
+    regionName: 'us-east-1'
+    stackName: 'network-stack-demo'
+    templateSource: 'file'
+    templateFile: 'stacks/network.yml'
+    templateParametersFile: 'parameters/network-params.json'
+    useChangeSet: true
+    changeSetName: 'network-stack-changeset'
+    description: 'Change set for network'
+    autoExecuteChangeSet: false
