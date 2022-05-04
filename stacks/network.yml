@@ -158,13 +158,13 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName}-PrivateRouteTable#2
-  PrivateRoute1:
+  PrivateRoute2:
     Type: AWS::EC2::Route
     Properties:
       RouteTableId: !Ref PrivateRouteTable2
       DestinationCidrBlock: 0.0.0.0/0
       NatGatewayId: !Ref NATGateway2
-  PrivateSubnet1RouteTableAssociation:
+  PrivateSubnet2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       RouteTableId: !Ref PrivateRouteTable2
